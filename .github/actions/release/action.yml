@@ -15,6 +15,38 @@ runs:
         [Revanced Extended for Android 6 & 7](https://github.com/kitadai31/revanced-patches-android6-7/releases)
         [Revanced Extended For Android 5:](https://github.com/d4n3436/revanced-patches-android5/releases)
         "> ${{ github.workspace }}-CHANGELOG.txt
+
+    - name: Align and Sign patched APKs
+        if: steps.check-gh-rv.outputs.internet_error == '0'
+        run: |
+          echo "[+] Aligning and Signing all patched APKs using revanced.jks..."
+          
+          # Find the latest installed build-tools version
+          BUILD_TOOLS=$(ls -d /usr/local/lib/android/sdk/build-tools/* | sort -V | tail -n 1)
+          echo "Using build-tools: $BUILD_TOOLS"
+
+          mkdir -p aligned
+          for apk in ./release/*.apk; do
+            base=$(basename "$apk")
+            echo "📐 Zipaligning $base ..."
+            "$BUILD_TOOLS/zipalign" -f 4 "$apk" "aligned/$base"
+
+            echo "🔏 Signing $base ..."
+            "$BUILD_TOOLS/apksigner" sign \
+              --ks "$KEYSTORE_PATH" \
+              --ks-key-alias "$KEYSTORE_ALIAS" \
+              --ks-pass pass:"$KEYSTORE_PASS" \
+              --key-pass pass:"$KEY_PASS" \
+              --in "aligned/$base" \
+              --out "./release/$base"
+          done
+
+          echo "[+] Verifying final signatures..."
+          for apk in ./release/*.apk; do
+            echo "🧪 Verifying signature for $(basename "$apk") ..."
+            "$BUILD_TOOLS/apksigner" verify --verbose "$apk"
+          done 
+    
     - name: Release
       uses: ncipollo/release-action@v1.14.0
       with:
