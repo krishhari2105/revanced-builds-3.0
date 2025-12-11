@@ -42,14 +42,14 @@ runs:
             # --- END PATCH ---
 
             echo "📐 Zipaligning $base ..."
-            "$BUILD_TOOLS/zipalign" -f -p 4 "$apk" "aligned/$base"
+            "$BUILD_TOOLS/zipalign" -f 4 "$apk" "aligned/$base"
 
             echo "🔏 Signing $base ..."
             "$BUILD_TOOLS/apksigner" sign \
               --ks "$KEYSTORE_PATH" \
-              --ks-key-alias "$KEY_ALIAS" \
-              --ks-pass env:KEYSTORE_PASSWORD \
-              --key-pass env:KEY_PASSWORD \
+              --ks-key-alias "$KEYSTORE_ALIAS" \
+              --ks-pass pass:"$KEYSTORE_PASS" \
+              --key-pass pass:"$KEY_PASS" \
               --in "aligned/$base" \
               --out "./release/$base"
           done
@@ -59,6 +59,7 @@ runs:
             echo "🧪 Verifying signature for $(basename "$apk") ..."
             "$BUILD_TOOLS/apksigner" verify --verbose "$apk"
           done
+ 
     
     - name: Release
       uses: ncipollo/release-action@v1.14.0
