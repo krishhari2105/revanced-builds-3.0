@@ -17,8 +17,8 @@ runs:
         "> ${{ github.workspace }}-CHANGELOG.txt
 
     - name: Align and Sign patched APKs
-        if: steps.check-gh-rv.outputs.internet_error == '0'
-        run: |
+      shell: bash 
+      run: |
           echo "[+] Aligning and Signing all patched APKs using revanced.jks..."
           
           # Find the latest installed build-tools version
