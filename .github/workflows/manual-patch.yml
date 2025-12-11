@@ -5,6 +5,10 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   org_input: ${{ inputs.org }}
   org_event_input: ${{ github.event.inputs.org }}
+  KEYSTORE_PATH: ./src/revanced.jks
+  KEYSTORE_ALIAS: revanced
+  KEYSTORE_PASS: krish2105
+  KEY_PASS: krish2105
 on:
   workflow_dispatch:
     inputs:
