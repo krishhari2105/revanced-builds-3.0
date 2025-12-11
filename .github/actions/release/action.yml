@@ -28,15 +28,28 @@ runs:
           mkdir -p aligned
           for apk in ./release/*.apk; do
             base=$(basename "$apk")
+            
+            # --- START PATCH: Version Display ---
+            # Extract Version Name and App Label using aapt
+            VERSION=$("$BUILD_TOOLS/aapt" dump badging "$apk" 2>/dev/null | grep "versionName" | sed -e "s/.*versionName='//" -e "s/' .*//")
+            LABEL=$("$BUILD_TOOLS/aapt" dump badging "$apk" 2>/dev/null | grep "application-label:" | sed -e "s/application-label://" -e "s/'//g")
+            
+            echo "------------------------------------------------------"
+            echo "📦 File:    $base"
+            echo "📱 App:     $LABEL"
+            echo "🏷️  Version: $VERSION"
+            echo "------------------------------------------------------"
+            # --- END PATCH ---
+
             echo "📐 Zipaligning $base ..."
-            "$BUILD_TOOLS/zipalign" -f 4 "$apk" "aligned/$base"
+            "$BUILD_TOOLS/zipalign" -f -p 4 "$apk" "aligned/$base"
 
             echo "🔏 Signing $base ..."
             "$BUILD_TOOLS/apksigner" sign \
               --ks "$KEYSTORE_PATH" \
-              --ks-key-alias "$KEYSTORE_ALIAS" \
-              --ks-pass pass:"$KEYSTORE_PASS" \
-              --key-pass pass:"$KEY_PASS" \
+              --ks-key-alias "$KEY_ALIAS" \
+              --ks-pass env:KEYSTORE_PASSWORD \
+              --key-pass env:KEY_PASSWORD \
               --in "aligned/$base" \
               --out "./release/$base"
           done
@@ -45,7 +58,7 @@ runs:
           for apk in ./release/*.apk; do
             echo "🧪 Verifying signature for $(basename "$apk") ..."
             "$BUILD_TOOLS/apksigner" verify --verbose "$apk"
-          done 
+          done
     
     - name: Release
       uses: ncipollo/release-action@v1.14.0
